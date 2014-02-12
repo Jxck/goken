@@ -36,7 +36,7 @@ func (s *Server) Listen(port string) {
 			s.clients = append(s.clients, client)
 			go client.ReadLoop(broadcast)
 		case message := <-broadcast:
-			go BroadCast(s.clients, message)
+			go s.BroadCast(message)
 		default:
 		}
 	}
@@ -57,8 +57,8 @@ func AcceptLoop(listener net.Listener) chan *Client {
 	return accept
 }
 
-func BroadCast(clients []*Client, message string) {
-	for _, client := range clients {
+func (s *Server) BroadCast(message string) {
+	for _, client := range s.clients {
 		go client.Write(message)
 	}
 }
