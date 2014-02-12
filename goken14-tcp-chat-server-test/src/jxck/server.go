@@ -19,13 +19,16 @@ func init() {
 	log.SetFlags(log.Lshortfile)
 }
 
-func main() {
-	port := ":" + os.Args[1]
-	listener, err := net.Listen("tcp", port)
+type Server struct {
+	port string
+}
+
+func (s *Server) Run() {
+	listener, err := net.Listen("tcp", s.port)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("server starts at %v\n", port)
+	fmt.Printf("server starts at %v\n", s.port)
 
 	accept := AcceptLoop(listener)
 	connections := make([]net.Conn, 0)
@@ -40,6 +43,16 @@ func main() {
 		default:
 		}
 	}
+}
+
+func main() {
+	port := ":3000"
+	if len(os.Args) > 2 {
+		port = ":" + os.Args[1]
+	}
+
+	server := &Server{port: port}
+	server.Run()
 }
 
 func AcceptLoop(listener net.Listener) chan net.Conn {
