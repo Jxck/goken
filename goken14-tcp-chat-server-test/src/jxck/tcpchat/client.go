@@ -13,20 +13,24 @@ func init() {
 }
 
 type Client struct {
-	Conn net.Conn
+	Conn     net.Conn
+	WriteBuf chan string
 }
 
 func NewClient(conn net.Conn) *Client {
 	client := &Client{
-		Conn: conn,
+		Conn:     conn,
+		WriteBuf: make(chan string, 32),
 	}
 	return client
 }
 
-func (c *Client) Write(message string) {
-	_, err := io.WriteString(c.Conn, message)
-	if err != nil {
-		log.Println(err)
+func (c *Client) WriteLoop() {
+	for message := range c.WriteBuf {
+		_, err := io.WriteString(c.Conn, message)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }
 
