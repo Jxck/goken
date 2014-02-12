@@ -36,8 +36,7 @@ func (s *Server) Listen(port string) {
 	broadcast := make(chan string)
 	for {
 		select {
-		case conn := <-accept:
-			client := NewClient(conn)
+		case client := <-accept:
 			go client.ReadLoop(broadcast)
 			clients = append(clients, client)
 		case message := <-broadcast:
@@ -47,15 +46,16 @@ func (s *Server) Listen(port string) {
 	}
 }
 
-func AcceptLoop(listener net.Listener) chan net.Conn {
-	accept := make(chan net.Conn)
+func AcceptLoop(listener net.Listener) chan *Client {
+	accept := make(chan *Client)
 	go func() {
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
 				log.Fatal(err)
 			}
-			accept <- conn
+			client := NewClient(conn)
+			accept <- client
 		}
 	}()
 	return accept
@@ -63,10 +63,10 @@ func AcceptLoop(listener net.Listener) chan net.Conn {
 
 func BroadCast(clients []*Client, message string) {
 	for _, client := range clients {
-		go func(conn net.Conn) {
-			bw := bufio.NewWriter(conn)
+		go func(client *Client) {
+			bw := bufio.NewWriter(client.Conn)
 			bw.WriteString(message)
 			bw.Flush()
-		}(client.Conn)
+		}(client)
 	}
 }
