@@ -1,11 +1,5 @@
 package tcpchat
 
-/**
- * 小さい方の実装。
- * Accept と Read と Broadcast をそれぞれ別の goroutine ループで回している。
- * Connection はスライスで持っている。
- **/
-
 import (
 	"bufio"
 	"fmt"
