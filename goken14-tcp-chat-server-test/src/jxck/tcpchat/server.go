@@ -1,4 +1,4 @@
-package main
+package tcpchat
 
 /**
  * 小さい方の実装。
@@ -12,7 +12,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"os"
 )
 
 func init() {
@@ -21,6 +20,10 @@ func init() {
 
 type Server struct {
 	port string
+}
+
+func NewServer(port string) *Server {
+	return &Server{port: port}
 }
 
 func (s *Server) Run() {
@@ -43,16 +46,6 @@ func (s *Server) Run() {
 		default:
 		}
 	}
-}
-
-func main() {
-	port := ":3000"
-	if len(os.Args) > 2 {
-		port = ":" + os.Args[1]
-	}
-
-	server := &Server{port: port}
-	server.Run()
 }
 
 func AcceptLoop(listener net.Listener) chan net.Conn {
