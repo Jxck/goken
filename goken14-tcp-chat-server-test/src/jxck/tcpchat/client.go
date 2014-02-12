@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 )
 
 func init() {
@@ -13,16 +12,24 @@ func init() {
 }
 
 type Client struct {
-	Conn     net.Conn
+	Conn     io.ReadWriter
 	WriteBuf chan string
 }
 
-func NewClient(conn net.Conn) *Client {
+func NewClient(conn io.ReadWriter) *Client {
 	client := &Client{
 		Conn:     conn,
 		WriteBuf: make(chan string, 32),
 	}
 	return client
+}
+
+func (c *Client) Write(message string) error {
+	_, err := io.WriteString(c.Conn, message)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Client) WriteLoop() {
