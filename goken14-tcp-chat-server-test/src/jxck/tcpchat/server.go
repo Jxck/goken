@@ -18,10 +18,14 @@ func init() {
 }
 
 type Server struct {
+	clients []*Client
 }
 
 func NewServer() *Server {
-	return new(Server)
+	server := &Server{
+		clients: make([]*Client, 0),
+	}
+	return server
 }
 
 func (s *Server) Listen(port string) {
@@ -32,15 +36,14 @@ func (s *Server) Listen(port string) {
 	fmt.Printf("server starts at %v\n", port)
 
 	accept := AcceptLoop(listener)
-	clients := make([]*Client, 0)
 	broadcast := make(chan string)
 	for {
 		select {
 		case client := <-accept:
 			go client.ReadLoop(broadcast)
-			clients = append(clients, client)
+			s.clients = append(s.clients, client)
 		case message := <-broadcast:
-			go BroadCast(clients, message)
+			go BroadCast(s.clients, message)
 		default:
 		}
 	}
