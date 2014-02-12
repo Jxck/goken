@@ -24,19 +24,19 @@ func NewClient(conn net.Conn) *Client {
 }
 
 func (c *Client) ReadLoop(broadcast chan string) {
-	fmt.Printf("connect %v\n", c)
+	fmt.Printf("connect %+v\n", c)
 	br := bufio.NewReader(c.Conn)
 	for {
 		message, err := br.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				fmt.Printf("dissconnect %v\n", c.Conn)
+				fmt.Printf("dissconnect %+v\n", c.Conn)
 			} else {
 				log.Println(err)
 			}
 			return
 		}
-		log.Printf("%q\n", message)
+		fmt.Printf("%q\n", message)
 		broadcast <- message
 	}
 }
