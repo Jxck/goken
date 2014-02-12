@@ -1,7 +1,6 @@
 package tcpchat
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"net"
@@ -34,8 +33,8 @@ func (s *Server) Listen(port string) {
 	for {
 		select {
 		case client := <-accept:
-			go client.ReadLoop(broadcast)
 			s.clients = append(s.clients, client)
+			go client.ReadLoop(broadcast)
 		case message := <-broadcast:
 			go BroadCast(s.clients, message)
 		default:
@@ -60,10 +59,6 @@ func AcceptLoop(listener net.Listener) chan *Client {
 
 func BroadCast(clients []*Client, message string) {
 	for _, client := range clients {
-		go func(client *Client) {
-			bw := bufio.NewWriter(client.Conn)
-			bw.WriteString(message)
-			bw.Flush()
-		}(client)
+		go client.Write(message)
 	}
 }

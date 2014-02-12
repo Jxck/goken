@@ -23,6 +23,13 @@ func NewClient(conn net.Conn) *Client {
 	return client
 }
 
+func (c *Client) Write(message string) {
+	_, err := io.WriteString(c.Conn, message)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func (c *Client) ReadLoop(broadcast chan string) {
 	fmt.Printf("connect %+v\n", c)
 	br := bufio.NewReader(c.Conn)
