@@ -9,7 +9,6 @@ package tcpchat
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"log"
 	"net"
 )
@@ -39,7 +38,7 @@ func (s *Server) Listen(port string) {
 		select {
 		case conn := <-accept:
 			client := NewClient(conn)
-			go ReadLoop(client, broadcast)
+			go client.ReadLoop(broadcast)
 			clients = append(clients, client)
 		case message := <-broadcast:
 			go BroadCast(clients, message)
@@ -60,25 +59,6 @@ func AcceptLoop(listener net.Listener) chan net.Conn {
 		}
 	}()
 	return accept
-}
-
-func ReadLoop(client *Client, broadcast chan string) {
-	fmt.Printf("connect %v\n", client)
-	br := bufio.NewReader(client.Conn)
-	for {
-		line, _, err := br.ReadLine()
-		if err != nil {
-			if err == io.EOF {
-				fmt.Printf("dissconnect %v\n", client.Conn)
-			} else {
-				log.Println(err)
-			}
-			return
-		}
-		message := string(line) + "\n"
-		log.Printf("%q\n", message)
-		broadcast <- string(message)
-	}
 }
 
 func BroadCast(clients []*Client, message string) {
