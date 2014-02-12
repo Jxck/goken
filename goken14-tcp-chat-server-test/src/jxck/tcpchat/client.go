@@ -27,7 +27,7 @@ func (c *Client) ReadLoop(broadcast chan string) {
 	fmt.Printf("connect %v\n", c)
 	br := bufio.NewReader(c.Conn)
 	for {
-		line, _, err := br.ReadLine()
+		message, err := br.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
 				fmt.Printf("dissconnect %v\n", c.Conn)
@@ -36,8 +36,7 @@ func (c *Client) ReadLoop(broadcast chan string) {
 			}
 			return
 		}
-		message := string(line) + "\n"
 		log.Printf("%q\n", message)
-		broadcast <- string(message)
+		broadcast <- message
 	}
 }
