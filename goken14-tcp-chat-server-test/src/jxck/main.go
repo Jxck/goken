@@ -16,6 +16,6 @@ func main() {
 		port = ":" + os.Args[1]
 	}
 
-	server := tcpchat.NewServer(port)
-	server.Run()
+	server := tcpchat.NewServer()
+	server.Listen(port)
 }

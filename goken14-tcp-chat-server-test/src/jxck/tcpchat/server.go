@@ -19,19 +19,18 @@ func init() {
 }
 
 type Server struct {
-	port string
 }
 
-func NewServer(port string) *Server {
-	return &Server{port: port}
+func NewServer() *Server {
+	return new(Server)
 }
 
-func (s *Server) Run() {
-	listener, err := net.Listen("tcp", s.port)
+func (s *Server) Listen(port string) {
+	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("server starts at %v\n", s.port)
+	fmt.Printf("server starts at %v\n", port)
 
 	accept := AcceptLoop(listener)
 	connections := make([]net.Conn, 0)
