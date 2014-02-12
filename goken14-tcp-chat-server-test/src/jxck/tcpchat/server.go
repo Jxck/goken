@@ -33,15 +33,16 @@ func (s *Server) Listen(port string) {
 	fmt.Printf("server starts at %v\n", port)
 
 	accept := AcceptLoop(listener)
-	connections := make([]net.Conn, 0)
+	clients := make([]*Client, 0)
 	broadcast := make(chan string)
 	for {
 		select {
 		case conn := <-accept:
-			go ReadLoop(conn, broadcast)
-			connections = append(connections, conn)
+			client := NewClient(conn)
+			go ReadLoop(client, broadcast)
+			clients = append(clients, client)
 		case message := <-broadcast:
-			go BroadCast(connections, message)
+			go BroadCast(clients, message)
 		default:
 		}
 	}
@@ -61,14 +62,14 @@ func AcceptLoop(listener net.Listener) chan net.Conn {
 	return accept
 }
 
-func ReadLoop(conn net.Conn, broadcast chan string) {
-	fmt.Printf("connect %v\n", conn)
-	br := bufio.NewReader(conn)
+func ReadLoop(client *Client, broadcast chan string) {
+	fmt.Printf("connect %v\n", client)
+	br := bufio.NewReader(client.Conn)
 	for {
 		line, _, err := br.ReadLine()
 		if err != nil {
 			if err == io.EOF {
-				fmt.Printf("dissconnect %v\n", conn)
+				fmt.Printf("dissconnect %v\n", client.Conn)
 			} else {
 				log.Println(err)
 			}
@@ -80,12 +81,12 @@ func ReadLoop(conn net.Conn, broadcast chan string) {
 	}
 }
 
-func BroadCast(connections []net.Conn, message string) {
-	for _, conn := range connections {
+func BroadCast(clients []*Client, message string) {
+	for _, client := range clients {
 		go func(conn net.Conn) {
 			bw := bufio.NewWriter(conn)
 			bw.WriteString(message)
 			bw.Flush()
-		}(conn)
+		}(client.Conn)
 	}
 }

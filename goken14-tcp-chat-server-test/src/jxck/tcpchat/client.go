@@ -2,6 +2,7 @@ package tcpchat
 
 import (
 	"log"
+	"net"
 )
 
 func init() {
@@ -9,8 +10,12 @@ func init() {
 }
 
 type Client struct {
+	Conn net.Conn
 }
 
-func NewClient() *Client {
-	return new(Client)
+func NewClient(conn net.Conn) *Client {
+	client := &Client{
+		Conn: conn,
+	}
+	return client
 }
