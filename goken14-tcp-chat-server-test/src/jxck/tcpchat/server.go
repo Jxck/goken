@@ -11,58 +11,88 @@ func init() {
 }
 
 type Server struct {
-	clients []*Client
+	port          string
+	clients       []*Client
+	broadcastChan chan string
 }
 
-func NewServer() *Server {
-	server := &Server{
-		clients: make([]*Client, 0),
+func NewServer(port string) *Server {
+	return &Server{
+		port:          port,
+		clients:       make([]*Client, 0, 10),
+		broadcastChan: make(chan string),
 	}
-	return server
 }
 
-func (s *Server) Listen(port string) {
-	listener, err := net.Listen("tcp", port)
+// サーバをスタートし、 BroadCast とクライアント管理用の
+// goroutine を開始する
+func (s *Server) ListenAndServe() (err error) {
+	listener, err := net.Listen("tcp", s.port)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	fmt.Printf("server starts at %v\n", port)
+	fmt.Printf("server starts at %v\n", s.port)
 
-	accept := AcceptLoop(listener)
-	broadcast := make(chan string)
+	go s.BroadCast()
+	dissconnect := s.RemoveClient()
 	for {
-		select {
-		case client := <-accept:
-			s.clients = append(s.clients, client)
-			go client.ReadLoop(broadcast)
-			go client.WriteLoop()
-		case message := <-broadcast:
-			go s.BroadCast(message)
-		default:
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Println(err)
+			continue
 		}
+		fmt.Println("new connection")
+		client := NewClient(conn, s.broadcastChan)
+		s.AddClient(client)
+		go client.Handle(dissconnect)
 	}
+	return nil
 }
 
-func AcceptLoop(listener net.Listener) chan *Client {
-	accept := make(chan *Client)
+// 接続してきたクライアントの追加
+func (s *Server) AddClient(c *Client) {
+	s.clients = append(s.clients, c)
+	fmt.Printf("add client (%d client connecting)\n", len(s.clients))
+}
+
+// 切断したクライアントの削除
+func (s *Server) RemoveClient() (dissconnect chan *Client) {
+	dissconnect = make(chan *Client)
 	go func() {
 		for {
-			conn, err := listener.Accept()
-			if err != nil {
-				log.Fatal(err)
+			client := <-dissconnect
+			for i, v := range s.clients {
+				if v == client {
+					err := client.Close()
+					if err != nil {
+						log.Println(err)
+					}
+					copy(s.clients[i:], s.clients[i+1:])
+					s.clients[len(s.clients)-1] = nil // GC
+					s.clients = s.clients[:len(s.clients)-1]
+				}
 			}
-			client := NewClient(conn)
-			accept <- client
+			fmt.Printf("remove client (%d client connecting)\n", len(s.clients))
 		}
 	}()
-	return accept
+	return dissconnect
 }
 
-func (s *Server) BroadCast(message string) {
-	for _, client := range s.clients {
-		select {
-		case client.WriteBuf <- message:
-		default:
-		}
+// 全てのクライアントに送信
+func (s *Server) BroadCast() {
+	for {
+		message := <-s.broadcastChan
+		go func() {
+			for _, client := range s.clients {
+				err := client.Send(message)
+				if err != nil {
+					log.Println(err)
+				}
+			}
+		}()
 	}
+}
+
+func ListenAndServe(port string) error {
+	return NewServer(":" + port).ListenAndServe()
 }

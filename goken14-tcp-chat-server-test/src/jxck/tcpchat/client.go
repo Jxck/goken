@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 )
 
 func init() {
@@ -12,49 +13,70 @@ func init() {
 }
 
 type Client struct {
-	Conn     io.ReadWriter
-	WriteBuf chan string
+	conn          net.Conn
+	reader        *bufio.Reader
+	writer        *bufio.Writer
+	broadcastChan chan string
 }
 
-func NewClient(conn io.ReadWriter) *Client {
-	client := &Client{
-		Conn:     conn,
-		WriteBuf: make(chan string, 32),
-	}
-	return client
-}
-
-func (c *Client) Write(message string) error {
-	_, err := io.WriteString(c.Conn, message)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *Client) WriteLoop() {
-	for message := range c.WriteBuf {
-		_, err := io.WriteString(c.Conn, message)
-		if err != nil {
-			log.Println(err)
-		}
+func NewClient(conn net.Conn, broadcastChan chan string) *Client {
+	return &Client{
+		conn:          conn,
+		reader:        bufio.NewReader(conn),
+		writer:        bufio.NewWriter(conn),
+		broadcastChan: broadcastChan,
 	}
 }
 
-func (c *Client) ReadLoop(broadcast chan string) {
-	fmt.Printf("connect %+v\n", c)
-	br := bufio.NewReader(c.Conn)
-	for {
-		message, err := br.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				fmt.Printf("dissconnect %+v\n", c.Conn)
-			} else {
-				log.Println(err)
+// メッセージのレシーブループを回し、受信メッセージとエラーを通知するための
+// channel を返す
+func (c *Client) Receive() (recvChan chan string, errChan chan error) {
+	recvChan = make(chan string)
+	errChan = make(chan error)
+	go func() {
+		for {
+			message, err := c.reader.ReadString('\n')
+			if err != nil {
+				errChan <- err
+				break
 			}
-			return
+			fmt.Printf("reseive message %q (%d)\n", message, len(message))
+			recvChan <- message
 		}
-		fmt.Printf("%q\n", message)
-		broadcast <- message
-	}
+	}()
+	return recvChan, errChan
+}
+
+// メッセージを送信する
+func (c *Client) Send(message string) (err error) {
+	_, err = c.writer.WriteString(message)
+	c.writer.Flush()
+	return err
+}
+
+// クライアントが受信したメッセージのブロードキャストと
+// 切断したクライアントの処理
+func (client *Client) Handle(dissconnect chan *Client) {
+	recvChan, errChan := client.Receive()
+	go func() {
+		for {
+			select {
+			case message := <-recvChan:
+				client.broadcastChan <- message
+			case err := <-errChan:
+				if err == io.EOF {
+					fmt.Println("dissconected")
+					dissconnect <- client
+				} else {
+					log.Println(err)
+				}
+			}
+		}
+	}()
+}
+
+func (client *Client) Close() (err error) {
+	fmt.Println("close client")
+	err = client.conn.Close()
+	return err
 }
