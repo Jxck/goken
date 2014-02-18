@@ -42,7 +42,21 @@ func TestLeaveChan(t *testing.T) {
 
 	actual := <-client.LeaveChan
 	expected := client
-	t.Logf("\n%#v\n%#v", expected, client)
+
+	if actual != expected {
+		t.Errorf("\ngot  %v\nwant %v", actual, expected)
+	}
+}
+
+func TestWriteChan(t *testing.T) {
+	id := 1
+	conn := &rwcMock{}
+	client := NewClient(id, conn, nil, nil)
+
+	expected := "message\r\n"
+	client.WriteChan <- expected
+
+	actual := string(conn.Bytes())
 
 	if actual != expected {
 		t.Errorf("\ngot  %v\nwant %v", actual, expected)
