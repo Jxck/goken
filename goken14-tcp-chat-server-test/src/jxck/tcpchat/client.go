@@ -51,9 +51,11 @@ func (c *Client) ReadLoop() {
 }
 
 func (c *Client) WriteLoop() {
+	bw := bufio.NewWriter(c.Conn)
 	for message := range c.WriteChan {
 		fmt.Printf("send message to client: %q\n", message)
-		fmt.Fprintf(c.Conn, message)
+		bw.WriteString(message)
+		bw.Flush()
 	}
 }
 
