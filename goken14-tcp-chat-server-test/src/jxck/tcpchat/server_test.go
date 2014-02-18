@@ -70,3 +70,13 @@ func TestNextId(t *testing.T) {
 		t.Errorf("nextid should start with %d but %d", actual, nextid)
 	}
 }
+
+func TestServerJoin(t *testing.T) {
+	server := NewServer()
+	actual := len(server.Clients)
+	expected := 0
+
+	if actual != expected {
+		t.Errorf("initial clients size should %d but %d", actual, expected)
+	}
+}
