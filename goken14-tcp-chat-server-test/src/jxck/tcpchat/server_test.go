@@ -89,5 +89,20 @@ func TestServerJoin(t *testing.T) {
 	if actual != expected {
 		t.Errorf("initial clients size should %d but %d", actual, expected)
 	}
+}
 
+func TestLeave(t *testing.T) {
+	server := NewServer()
+	client := &Client{}
+	server.Join(client)
+
+	if len(server.Clients) != 1 {
+		t.Errorf("clients size should %d but %d", 1, len(server.Clients))
+	}
+
+	server.LeaveChan <- client
+
+	if len(server.Clients) != 0 {
+		t.Errorf("clients size should %d but %d", 0, len(server.Clients))
+	}
 }
