@@ -7,11 +7,11 @@ import (
 
 type rwcMock struct {
 	bytes.Buffer
-	closed bool
+	Closed bool
 }
 
 func (m *rwcMock) Close() error {
-	m.closed = true
+	m.Closed = true
 	return nil
 }
 

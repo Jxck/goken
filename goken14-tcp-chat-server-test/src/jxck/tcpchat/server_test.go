@@ -106,3 +106,23 @@ func TestLeave(t *testing.T) {
 		t.Errorf("clients size should %d but %d", 0, len(server.Clients))
 	}
 }
+
+func TestClose(t *testing.T) {
+	t.Skip()
+	server := NewServer()
+	client1 := &Client{Id: 1, Conn: new(rwcMock)}
+	client2 := &Client{Id: 2, Conn: new(rwcMock)}
+	client3 := &Client{Id: 3, Conn: new(rwcMock)}
+	client4 := &Client{Id: 4, Conn: new(rwcMock)}
+
+	server.Join(client1)
+	server.Join(client2)
+	server.Join(client3)
+	server.Join(client4)
+
+	server.Close()
+
+	for _, c := range []*Client{client1, client2, client3, client4} {
+		t.Log(c.Conn.(*rwcMock))
+	}
+}
