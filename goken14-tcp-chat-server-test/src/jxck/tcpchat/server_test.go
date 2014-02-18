@@ -79,4 +79,15 @@ func TestServerJoin(t *testing.T) {
 	if actual != expected {
 		t.Errorf("initial clients size should %d but %d", actual, expected)
 	}
+
+	client := &Client{}
+	server.Join(client)
+
+	actual = len(server.Clients)
+	expected = 1
+
+	if actual != expected {
+		t.Errorf("initial clients size should %d but %d", actual, expected)
+	}
+
 }
