@@ -62,3 +62,11 @@ func TestMultiClient(t *testing.T) {
 		t.Errorf("\ngot  %v\nwant %v", actual1, actual2)
 	}
 }
+
+func TestNextId(t *testing.T) {
+	nextid := NextId()
+	actual := <-nextid
+	if actual != 0 {
+		t.Errorf("nextid should start with %d but %d", actual, nextid)
+	}
+}
