@@ -16,11 +16,7 @@ func TestWhere(t *testing.T) {
 	db := &DB{
 		query: new(Query),
 	}
-	var actual string = db
-		.Select("name")
-		.From("users")
-		.Where("id = ? and age > ?", "1", "20")
-		.Query().String()
+	var actual string = db.Select("name").From("users").Where("id = ? and age > ?", "1", "20").Query().String()
 	var expected string = "SELECT name FROM users WHERE id = 1 and age > 20"
 	assert.Equal(t, actual, expected)
 }

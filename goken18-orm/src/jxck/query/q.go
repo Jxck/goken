@@ -63,7 +63,8 @@ func (db *DB) From(str string) *DB {
 }
 
 func escape(value string) string {
-
+	// TODO: implement me
+	return value
 }
 
 func (db *DB) Where(str string, values ...string) *DB {
